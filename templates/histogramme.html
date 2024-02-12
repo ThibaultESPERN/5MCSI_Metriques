@@ -46,6 +46,17 @@
         var chart = new google.visualization.Histogram(document.getElementById('chart_div'));
         chart.draw(dataTable, options);
     }
+
+     function getColorForTemperature(temp) {
+      if(temp < 0) {
+        return '#1E90FF';
+      } else if(temp >= 0 && temp < 20) {
+        return '##33CC33';
+      } else {
+        return '#FF4500';
+      }
+    }
+      
     </script>
   </body>
 </html>
