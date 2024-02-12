@@ -26,7 +26,7 @@
           var annotation = date.toLocaleDateString();
           dataArray.push([date.toLocaleDateString(), entry.temp, color, annotation]);
         });
-        var data = google.visualization.arrayToDataTable(dataArray);
+        var dataTable = google.visualization.arrayToDataTable(dataArray);
         
         var options = {
           title: 'Évolution des températures de Paris pour les 16 prochains jours',
