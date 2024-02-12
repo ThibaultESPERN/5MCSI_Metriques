@@ -5,49 +5,59 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
       google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawChart);
+      google.charts.setOnLoadCallback(drawChart);
 
-        function drawChart() {
-            fetch('https://api.github.com/repos/OpenRSI/5MCSI_Metriques/commits')
-                .then(response => response.json())
-                .then(data => {
-                    const commitCounts = new Array(60).fill(0);
-                    data.forEach(commit => {
-                        const commitDate = new Date(commit.commit.author.date);
-                        const minutes = commitDate.getMinutes();
-                        commitCounts[minutes]++;
-                    });
+      function drawChart() {
+        fetchData().then(commitData => {
+          const data = new google.visualization.DataTable();
+          data.addColumn('string', 'DateTime');
+          data.addColumn('number', 'Commits');
 
-                    const dataTable = new google.visualization.DataTable();
-                    dataTable.addColumn('number', 'Minute');
-                    dataTable.addColumn('number', 'Commits');
-                    commitCounts.forEach((count, minute) => {
-                        dataTable.addRow([minute, count]);
-                    });
+          data.addRows(commitData);
 
-                    const options = {
-                        title: 'Commits par Minute',
-                        hAxis: {
-                            title: 'Minutes',
-                            minValue: 0,
-                            maxValue: 59,
-                            textStyle: {color: '#333', fontSize: 12},
-                            titleTextStyle: {color: '#333', fontSize: 14}
-                        },
-                        vAxis: {
-                            title: 'Nombre de Commits',
-                            textStyle: {color: '#333', fontSize: 12},
-                            titleTextStyle: {color: '#333', fontSize: 14}
-                        },
-                        legend: 'none',
-                        colors: ['#007bff']
-                    };
+          var options = {
+            title: 'Nombre de commits effectués par minute',
+            hAxis: {title: 'DateTime', slantedText: true, slantedTextAngle: 45},
+            vAxis: {
+              title: 'Commits',
+              minValue: 0, // Ensure the minimum value of y-axis is set to 0
+              viewWindow: {
+                min: 0 // Explicitly sets the minimum value of the vertical axis to 0
+              }
+            },
+            legend: 'none'
+          };
 
-                    const chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-                    chart.draw(dataTable, options);
-                })
-                .catch(error => console.error('Erreur lors de la récupération des données:', error));
-        }
+          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+          chart.draw(data, options);
+        });
+      }
+
+      async function fetchData() {
+        const response = await fetch('https://api.github.com/repos/ThibaultESPERN/5MCSI_Metriques/commits');
+        const commits = await response.json();
+        const commitCountPerDateTime = {};
+
+        // Process commits to count per day and hour
+        commits.forEach(commit => {
+          const date = new Date(commit.commit.author.date);
+          const day = date.toISOString().split('T')[0]; // YYYY-MM-DD
+          const time = date.toISOString().split('T')[1].substring(0, 5); // HH:MM
+          const dateTimeStr = `${day} ${time}`;
+
+          if (commitCountPerDateTime[dateTimeStr]) {
+            commitCountPerDateTime[dateTimeStr] += 1;
+          } else {
+            commitCountPerDateTime[dateTimeStr] = 1;
+          }
+        });
+
+        // Convert to array format suitable for Google Charts
+        return Object.keys(commitCountPerDateTime).map(dateTime => [dateTime, commitCountPerDateTime[dateTime]]);
+      }
     </script>
-</body>
+  </head>
+  <body style="background-color:powderblue">
+    <div id="chart_div" style="width: 100%; height: 500px;background-color:powderblue"></div>
+  </body>
 </html>
